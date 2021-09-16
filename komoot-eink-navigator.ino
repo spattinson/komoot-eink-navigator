@@ -181,10 +181,10 @@ void showPartialUpdate_street(std::string street, std::string old_street ) {
 //    display.setFont(&FreeSansBold12pt7b);
 //  }
     display.setTextColor(GxEPD_BLACK);
-    display.fillRect(10, 70, 239, 51, GxEPD_WHITE);
+    display.fillRect(10, 66, 239, 51, GxEPD_WHITE);
     display.setCursor(10, 115);
     display.print(old_street.c_str());
-    display.setCursor(10, 95);
+    display.setCursor(10, 85);
     display.print(street.c_str());
     display.updateWindow(10, 70, 239, 51, true);
 //    display.update();
