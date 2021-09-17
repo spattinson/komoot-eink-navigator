@@ -181,12 +181,12 @@ void showPartialUpdate_street(std::string street, std::string old_street ) {
 //    display.setFont(&FreeSansBold12pt7b);
 //  }
     display.setTextColor(GxEPD_BLACK);
-    display.fillRect(10, 66, 239, 51, GxEPD_WHITE);
+    display.fillRect(10, 66, 239, 54, GxEPD_WHITE);
     display.setCursor(10, 115);
     display.print(old_street.c_str());
     display.setCursor(10, 85);
     display.print(street.c_str());
-    display.updateWindow(10, 70, 239, 51, true);
+    display.updateWindow(10, 66, 239, 54, true);
 //    display.update();
 
 }
@@ -211,16 +211,16 @@ for(;;){ // infinite loop
   Serial.println (volt);
   Serial.print ("Raw = ");
   Serial.println (raw);
-//  display.fillRect (200, 0, 49, 15, GxEPD_WHITE);
-  display.fillRect (66, 0, 184, 16, GxEPD_WHITE);
+  display.fillRect (200, 0, 49, 17, GxEPD_WHITE);
+//  display.fillRect (66, 0, 184, 17, GxEPD_WHITE);
   display.setFont(&FreeSansBold9pt7b);
   display.setTextColor(GxEPD_BLACK);
   display.setCursor(200,15);
   display.print(volt);
   display.print("V");
 //  display.update();
-//  display.updateWindow(200, 0, 49, 15);
-  display.updateWindow(66, 0, 184, 16);
+  display.updateWindow(200, 0, 49, 17);
+//  display.updateWindow(66, 0, 184, 17);
   delay(56*1000);
 }
 }
