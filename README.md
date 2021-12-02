@@ -30,7 +30,7 @@ How to use the device :
 6. Reset the board and wait on the screen and the device will automatically pair 
 7. Go back and start the navigation under plan and the display will start updating !
 
-![alt text](image.jpg)
+![alt text](IMG_20210917_140115.jpg)
 
 Why this design?
 
