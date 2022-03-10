@@ -5,10 +5,7 @@ Hardware : LilyGO T5 v2.3.1_2.13 2.13"  ESP32 eink dev board and a 3d printed ca
 
 How to use the device :
 
-//One time
-1.Run the example BLE server program on the board
-2.Pair android device using nrfconnect app.
-3.Important step:
+1.Important step:
 
 Edit this file: `libraries/BLE/src/BLERemoteCharacteristic.cpp`
 
@@ -24,7 +21,7 @@ desc->writeValue(val, 2);
 Komoot does not use the `0x2902` descriptor convention
 
 How to use the device :
-4. Upload the main.ino program
+2. Upload the main.ino program
 //Pairing
 5. Open the komoot app and navigate to profile>settings>Ble connect
 6. Reset the board and wait on the screen and the device will automatically pair 
