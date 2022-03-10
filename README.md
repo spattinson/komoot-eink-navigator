@@ -21,11 +21,16 @@ desc->writeValue(val, 2);
 Komoot does not use the `0x2902` descriptor convention
 
 How to use the device :
+
 2. Upload the main.ino program
+
 //Pairing
+
 5. Open the komoot app and navigate to profile>settings>Ble connect
-6. Reset the board and wait on the screen and the device will automatically pair 
-7. Go back and start the navigation under plan and the display will start updating !
+
+7. Reset the board and wait on the screen and the device will automatically pair 
+
+9. Go back and start the navigation under plan and the display will start updating !
 
 ![alt text](IMG_20210917_140115.jpg)
 
@@ -34,4 +39,3 @@ Why this design?
 The navigation app keeps the phone display ON during operation. It is hard on the battery life especially when we need to keep it maximum brightness for visibility in outdoor conditions. This companion device solves both these issues by implementing a low power design that has greater visibility in bright outdoor conditions.
 
 
-![alt text](https://github.com/RpDp-git/komoot-eink-navigator/blob/master/sampledisplay.jpeg)
