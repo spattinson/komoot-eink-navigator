@@ -22,7 +22,7 @@ Komoot does not use the `0x2902` descriptor convention
 
 How to use the device :
 
-2. Upload the main.ino program
+2. Upload the ino program
 
 //Pairing
 
