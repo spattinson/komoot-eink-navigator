@@ -26,11 +26,10 @@ How to use the device :
 
 //Pairing
 
-5. Open the komoot app and navigate to profile>settings>Ble connect
+5. Open the komoot app and navigate to profile>settings>Ble connect. tap on cyclo-hac and turn on esp32
 
-7. Reset the board and wait on the screen and the device will automatically pair 
 
-9. Go back and start the navigation under plan and the display will start updating !
+6. Go back and start the navigation under plan and the display will start updating !
 
 ![alt text](IMG_20210917_140115.jpg)
 
