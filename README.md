@@ -1,8 +1,17 @@
 # komoot-eink-navigator
 Bluetooth Low Energy companion display for Komoot app
 
-Hardware : LilyGO T5 v2.3.1_2.13 2.13"  ESP32 eink dev board and a 3d printed case
-install LilyGO T5 v2.3.1_2.13 2.13 for arduino user : https://github.com/Xinyuan-LilyGO/LilyGo-T5-Epaper-Series?spm=a2g0o.detail.1000023.1.79987bb0ULPo6j  
+Hardware : 
+
+LilyGO T5 v2.3.1_2.13 2.13  ESP32 eink dev board 
+
+3d printed case ( https://www.thingiverse.com/thing:4670205 )
+
+battery 1000mah (503450 on aliexpress 5$) not necessary if you plug the system all time on 5v source. 
+
+Esp32 tutorial installation for arduino : https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html
+
+LilyGO T5 v2.3.1_2.13 2.13 tutorial installation for arduino : https://github.com/Xinyuan-LilyGO/LilyGo-T5-Epaper-Series?spm=a2g0o.detail.1000023.1.79987bb0ULPo6j 
 
 How to use the device :
 
