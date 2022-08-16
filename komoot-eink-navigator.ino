@@ -35,7 +35,6 @@
 GxIO_Class io(SPI,  EPD_CS, EPD_DC,  EPD_RSET);
 GxEPD_Class display(io, EPD_RSET, EPD_BUSY);
 
-
 std::string value = "Start";
 int timer = 0 ;
 // The remote service we wish to connect to.
@@ -266,7 +265,7 @@ void setup() {
   Battery_check();
   //display.updateWindow(0, 0, 220, 128, false);
 
-  BLEDevice::init("komootGalou");
+  BLEDevice::init("komoot_eink");
   // code added for pairing
   BLEServer *pServer = BLEDevice::createServer();
   BLEService *pService = pServer->createService(SERVICE_UUID);
