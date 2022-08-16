@@ -24,6 +24,8 @@ How to use the device :
 
 2. Upload the ino program
 
+![image](https://user-images.githubusercontent.com/20805763/184874755-e7740692-4c57-4012-bc63-e487796c6ea8.png)
+
 //Pairing
 
 5. Open the komoot app and navigate to profile>settings>Ble connect. tap on cyclo-hac and turn on esp32
