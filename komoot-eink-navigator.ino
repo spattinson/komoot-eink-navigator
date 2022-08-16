@@ -1,5 +1,5 @@
 #include "symbols.h"
-
+//#include "u8g2_fonts_eink.h"
 /**
    adapted from palto42's code for the ssd1306 display https://github.com/palto42/komoot-navi
 */
@@ -20,6 +20,9 @@
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
+//#include "u8g2_fonts.h"
+
+//#define FONT_battery19 u8g2_font_battery24_tr
 
 // next two lines added for pairing
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -61,7 +64,8 @@ float volt = 0.0;
 const float vScale1 = 579; // divider for higher voltage range
 const float vScale2 = 689; // divider for lower voltage range
 
-long interval = 300000;  // interval to display battery voltage 5mins should be sufficient
+//long interval = 300000;  // interval to display battery voltage 5mins should be sufficient
+long interval = 120000; //2 min update battery
 long previousMillis = 0; // used to time battery update
 
 // distance and streets
@@ -142,6 +146,7 @@ bool connectToServer() {
       pRemoteCharacteristic->registerForNotify(notifyCallback);
       Serial.println(" - Registered for notifications");
 
+
       connected = true;
       return true;
       //display.fillRect(0, 0, GxEPD_WIDTH, GxEPD_HEIGHT, GxEPD_WHITE );
@@ -176,97 +181,92 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 };
 
 void showPartialUpdate_dir(uint8_t dir) {   // <--------------------------- DIRECTION
+  display.init();
   display.fillRect(0, 0, 64, 64, GxEPD_WHITE);
-  display.updateWindow(0, 0, 220, 120, false);
   display.drawBitmap(5, 5, symbols[dir].bitmap, 60, 60, 0);
-  display.updateWindow(0, 0, 64, 64, true);
+  display.updateWindow(0, 0, 64, 64, true); // direction
   updated_dir = 1;
+  display.powerDown();
 }
 
 void showPartialUpdate_street(std::string street, std::string old_street ) { // <-------- STREET
-  display.setTextColor(GxEPD_BLACK);
+  display.init();
   display.setFont(&FreeSansBold9pt7b);
-  display.updateWindow(0, 0, 220, 120, false);
   display.fillRect(10, 66, 239, 54, GxEPD_WHITE);
   display.setCursor(10, 85);
   display.print(street.c_str());
   display.setCursor(10, 115);
   display.print(old_street.c_str());
   updated_street = 1;
-  display.updateWindow(10, 66, 239, 54, true);
+  display.updateWindow(10, 66, 239, 54, true); //street
+  display.powerDown();
 }
 
 void showPartialUpdate_dist(uint32_t dist) { //<--------------------------------- DISTANCE
-
+  display.init();
   display.setFont(&FreeSansBold18pt7b);
-  display.setTextColor(GxEPD_BLACK);
-  display.updateWindow(0, 0, 220, 120, false);
   display.fillRect    (85, 33, 120, 30, GxEPD_WHITE);
   display.setCursor(105, 57);
   display.print(dist);
   display.println("m");
-  display.updateWindow(85, 33, 120, 30, true);
+  display.updateWindow(85, 33, 120, 30, true); //distance
   updated_dist = 1;
-
+  display.powerDown();
 }
 
 void Battery_check(void) {
   raw  = (float) analogRead(battPin);
   volt = raw / vScale1;
-  Serial.print ("Battery = ");
-  Serial.println (volt);
-  Serial.print ("Raw = ");
-  Serial.println (raw);
-
-  display.updateWindow(0, 0, 220, 120, false);
-  display.fillRect (200, 0, 50, 20, GxEPD_WHITE);
-  display.setFont(&FreeSansBold9pt7b);
+  display.init();
+  // display.setRotation(3);
   display.setTextColor(GxEPD_BLACK);
+  display.fillRect (200, 1, 45, 20, GxEPD_WHITE);
+  display.setFont(&FreeSansBold9pt7b);
   display.setCursor(200, 15);
-  int VbatP = mapf(volt, 3.0, 4.26, 0, 100); // vbat en pourcentage
+  //int VbatP = mapf(volt, 3.0, 4.26, 0, 100); // vbat en pourcentage
+  int VbatP = mapf(volt, 3.0, 4.26, 0, 100);
+  Serial.println (VbatP);
   display.print(VbatP);
   display.print("%");
-  display.updateWindow(200, 0, 50, 20, true);
+  display.updateWindow(200, 1, 45, 20, true);
+  
+  //display.updateWindow(200, 1, 35, 425, true);
+  display.powerDown();
 
 }
 
 void setup() {
   // enable debug output
   Serial.begin(115200);
-
-  // Battery voltage
   pinMode(battPin, INPUT);
   esp_adc_cal_characteristics_t adc_chars;
   esp_adc_cal_value_t val_type = esp_adc_cal_characterize((adc_unit_t)ADC_UNIT_1, (adc_atten_t)ADC_ATTEN_DB_2_5, (adc_bits_width_t)ADC_WIDTH_BIT_12, 1100, &adc_chars);
-  raw  = analogRead(battPin);
-  volt = raw / vScale1;
-  Serial.print ("Battery = ");
-  Serial.println (volt);
-  Serial.print ("Raw = ");
-  Serial.println (raw);
 
   SPI.begin(EPD_SCLK, EPD_MISO, EPD_MOSI);
   // Display start
+
   display.init();
   display.setRotation(3);
-
-  display.fillRect(0, 0, 250, 120, GxEPD_WHITE);
-  display.setFont(&FreeSansBold12pt7b);
-  display.setTextColor(GxEPD_BLACK);
-  display.setCursor(40, 50);
-  display.println("Komoot Nav"); //Boot Image
-  display.setFont(&FreeSansBold9pt7b);
-  display.setCursor(75, 70);
-  display.println(connectText);
-  display.updateWindow(0, 0, 220, 120, true);
-
-  // Battery voltage
-  pinMode(battPin, INPUT);
-  Battery_check();
-
+  display.updateWindow(200, 1, 45, 425, true);
+  display.updateWindow(30, 30, 160, 60, true);
   display.update();
 
-  BLEDevice::init("komootnav");
+  display.fillRect(30, 30, 160, 80, GxEPD_WHITE);
+  display.setTextColor(GxEPD_BLACK);
+  display.setFont(&FreeSansBold12pt7b);
+  display.setCursor(40, 50);
+  display.print("Komoot Nav"); //Boot Image
+  Serial.println("Komoot Nav!");
+  display.setFont(&FreeSansBold9pt7b);
+  display.setCursor(75, 70);
+  display.print(connectText);
+  display.updateWindow(30, 30, 160, 60, true);
+  display.powerDown();
+
+  Battery_check();
+  //display.updateWindow(0, 0, 220, 128, false);
+
+  BLEDevice::init("komootGalou");
   // code added for pairing
   BLEServer *pServer = BLEDevice::createServer();
   BLEService *pService = pServer->createService(SERVICE_UUID);
@@ -309,18 +309,22 @@ void loop() {
   // connected we set the connected flag to be true.
   if (doConnect == true) {
     if (connectToServer()) {
+      display.init();
       Serial.println("We are now connected to the BLE Server.");
-      display.updateWindow(0, 0, 220, 120, false);
-      display.fillRect(0, 0, 220, 120, GxEPD_WHITE);
-      display.updateWindow(0, 0, 220, 120, true);
-
+      display.fillRect(0, 0, 249, 120, GxEPD_WHITE);
+      //display.updateWindow(0, 0, 249, 120, true); //street
+      display.updateWindow(0, 0, 220, 120, true); //street
+      display.powerDown();
       Battery_check();
+
     } else {
-      //display.update();
+      display.init();
+      display.update();
+      display.powerDown();
       Serial.println("We have failed to connect to the server; there is nothing more we will do.");
     }
     doConnect = false;
-    display.update();
+    //display.update();
   }
 
 
@@ -373,28 +377,34 @@ void loop() {
         Serial.print("Direction update: ");
         Serial.println(d);
         updated = true;
+
+        //Battery_check();
       } //display direction
-
-      /* if (updated_dir == 1  ) {
-          display.updateWindow(0, 0, 64, 64, true);
-         //       Serial.println("Partial update");
-         updated = false;
-        }
-        if (updated_dist == 1) {
-        display.updateWindow(105, 33, 144, 25, true);
-        updated_dist = 0;
-        }
-        if (updated_dir == 1) {
-        display.updateWindow(0, 0, 65, 65, true);
-        updated_dir = 0;
-        }
-        if (updated_street == 1) {
-        display.updateWindow(10, 66, 239, 54, true);
-        updated_street = 0;
-        //display.update();
-        }*/
-
-
+      /*
+            //display.init();
+            display.setRotation(3);
+            if (updated_dir == 1  ) {
+              display.init();
+              display.updateWindow(0, 0, 64, 64, true); // direction
+              display.updateWindow(0, 0, 64, 64, true); // direction
+              updated = false;
+              display.powerDown();
+            }
+            if (updated_dist == 1) {
+              display.init();
+              display.updateWindow(85, 33, 120, 30, true);//distance
+              display.updateWindow(85, 33, 120, 30, true);//distance
+              updated_dist = 0;
+              display.powerDown();
+            }
+            if (updated_street == 1) {
+              display.init();
+              display.updateWindow(10, 66, 239, 54, true); //street
+              display.updateWindow(10, 66, 239, 54, true); //street
+              updated_street = 0;
+              display.powerDown();
+            }
+      */
       if (dist2 > 100) {
         esp_sleep_enable_timer_wakeup(4000000);
         delay(4000);
