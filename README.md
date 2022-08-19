@@ -1,5 +1,5 @@
 # komoot-eink-navigator
-Bluetooth Low Energy companion display for Komoot app
+Bluetooth Low Energy head up bike display GPS for Komoot app
 
 Hardware : 
 
