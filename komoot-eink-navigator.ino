@@ -1,8 +1,8 @@
 #include "symbols.h"
-
+//#include "u8g2_fonts_eink.h"
 /**
- * adapted from palto42's code for the ssd1306 display https://github.com/palto42/komoot-navi
- */
+   adapted from palto42's code for the ssd1306 display https://github.com/palto42/komoot-navi
+*/
 
 #include "BLEDevice.h"
 // next two lines added for pairing
@@ -20,6 +20,9 @@
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
+//#include "u8g2_fonts.h"
+
+//#define FONT_battery19 u8g2_font_battery24_tr
 
 // next two lines added for pairing
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -31,7 +34,6 @@
 
 GxIO_Class io(SPI,  EPD_CS, EPD_DC,  EPD_RSET);
 GxEPD_Class display(io, EPD_RSET, EPD_BUSY);
-
 
 std::string value = "Start";
 int timer = 0 ;
@@ -55,17 +57,18 @@ uint16_t connectedTextBoundsW, connectedTextBoundsH;
 const char connectedText[] = "Connected";
 
 const int battPin = 35; // A2=2 A6=34
-unsigned int raw=0;
-float volt=0.0;
+unsigned int raw = 0;
+float volt = 0.0;
 // ESP32 ADV is a bit non-linear
 const float vScale1 = 579; // divider for higher voltage range
 const float vScale2 = 689; // divider for lower voltage range
 
-long interval = 300000;  // interval to display battery voltage 5mins should be sufficient
+//long interval = 300000;  // interval to display battery voltage 5mins should be sufficient
+long interval = 120000; //2 min update battery
 long previousMillis = 0; // used to time battery update
 
 // distance and streets
-std::string old_street = ""; 
+std::string old_street = "";
 uint8_t dir = 255;
 uint32_t dist2 = 4294967295;
 std::string street;
@@ -76,31 +79,35 @@ bool updated_dist = 0;
 bool updated_dir = 0;
 bool updated_street = 0;
 
+double mapf(double val, double in_min, double in_max, double out_min, double out_max) {
+  return (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
-//  Serial.print("Notify callback for characteristic ");
-//  Serial.print(pBLERemoteCharacteristic->getUUID().toString().c_str());
-//  Serial.print(" of data length ");
-//  Serial.println(length);
-//  Serial.print("data: ");
-//  Serial.println((char*)pData);
+  //  Serial.print("Notify callback for characteristic ");
+  //  Serial.print(pBLERemoteCharacteristic->getUUID().toString().c_str());
+  //  Serial.print(" of data length ");
+  //  Serial.println(length);
+  //  Serial.print("data: ");
+  //  Serial.println((char*)pData);
 }
 
 class MyClientCallback : public BLEClientCallbacks {
 
-  void onConnect(BLEClient* pclient) {
-  }
+    void onConnect(BLEClient* pclient) {
+    }
 
-  void onDisconnect(BLEClient* pclient) {
-    connected = false;
-    Serial.println("onDisconnect");
-  }
+    void onDisconnect(BLEClient* pclient) {
+      connected = false;
+      Serial.println("onDisconnect");
+    }
 };
 
 bool connectToServer() {
 
   Serial.print("Forming a connection to ");
   Serial.println(myDevice->getAddress().toString().c_str());
-  
+
   BLEClient* pClient = BLEDevice::createClient();
   Serial.println(" - Created client");
 
@@ -132,152 +139,133 @@ bool connectToServer() {
   Serial.println(" - Found our characteristic");
 
   // Read the value of the characteristic.
-  if(pRemoteCharacteristic->canRead()) {
+  if (pRemoteCharacteristic->canRead()) {
     std::string value = pRemoteCharacteristic->readValue();
-    if(pRemoteCharacteristic->canNotify()) {
+    if (pRemoteCharacteristic->canNotify()) {
       pRemoteCharacteristic->registerForNotify(notifyCallback);
       Serial.println(" - Registered for notifications");
-      
+
+
       connected = true;
       return true;
-      display.fillRect(0, 0, GxEPD_WIDTH, GxEPD_HEIGHT,GxEPD_WHITE );
+      //display.fillRect(0, 0, GxEPD_WIDTH, GxEPD_HEIGHT, GxEPD_WHITE );
     }
     Serial.println("Failed to register for notifications");
   } else {
     Serial.println("Failed to read our characteristic");
   }
-  
+
   pClient->disconnect();
   return false;
 }
 /**
- * Scan for BLE servers and find the first one that advertises the service we are looking for.
- */
+   Scan for BLE servers and find the first one that advertises the service we are looking for.
+*/
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
- /**
-   * Called for each advertising BLE server.
-   */
-  void onResult(BLEAdvertisedDevice advertisedDevice) {
-    Serial.print("BLE Advertised Device found: ");
-    Serial.println(advertisedDevice.toString().c_str());
+    /**
+        Called for each advertising BLE server.
+    */
+    void onResult(BLEAdvertisedDevice advertisedDevice) {
+      Serial.print("BLE Advertised Device found: ");
+      Serial.println(advertisedDevice.toString().c_str());
 
-    // We have found a device, let us now see if it contains the service we are looking for.
-    if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(serviceUUID)) {
-      BLEDevice::getScan()->stop();
-      myDevice = new BLEAdvertisedDevice(advertisedDevice);
-      doConnect = true;
-      doScan = true;
-    } 
-  }
-}; 
+      // We have found a device, let us now see if it contains the service we are looking for.
+      if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(serviceUUID)) {
+        BLEDevice::getScan()->stop();
+        myDevice = new BLEAdvertisedDevice(advertisedDevice);
+        doConnect = true;
+        doScan = true;
+      }
+    }
+};
 
-void showPartialUpdate_dir(uint8_t dir) {
-    display.fillRect(0, 0, 65, 65, GxEPD_WHITE);
-    display.drawBitmap(5, 5, symbols[dir].bitmap, 60, 60, 0);
-    updated_dir = 1;
-//    display.update();
-//    display.updateWindow(0, 0, 65, 65, true);
+void showPartialUpdate_dir(uint8_t dir) {   // <--------------------------- DIRECTION
+  display.init();
+  display.fillRect(0, 0, 64, 64, GxEPD_WHITE);
+  display.drawBitmap(5, 5, symbols[dir].bitmap, 60, 60, 0);
+  display.updateWindow(0, 0, 64, 64, true); // direction
+  updated_dir = 1;
+  display.powerDown();
 }
 
-void showPartialUpdate_street(std::string street, std::string old_street ) {
-//  if (street.size() > 8) {
-    display.setFont(&FreeSansBold9pt7b);
-//  } else {
-//    display.setFont(&FreeSansBold12pt7b);
-//  }
-    display.setTextColor(GxEPD_BLACK);
-    display.fillRect(10, 66, 239, 54, GxEPD_WHITE);
-    display.setCursor(10, 115);
-    display.print(old_street.c_str());
-    display.setCursor(10, 85);
-    display.print(street.c_str());
-    updated_street = 1;
-//    display.updateWindow(10, 66, 239, 54, true);
-//    display.update();
-
+void showPartialUpdate_street(std::string street, std::string old_street ) { // <-------- STREET
+  display.init();
+  display.setFont(&FreeSansBold9pt7b);
+  display.fillRect(10, 66, 239, 54, GxEPD_WHITE);
+  display.setCursor(10, 85);
+  display.print(street.c_str());
+  display.setCursor(10, 115);
+  display.print(old_street.c_str());
+  updated_street = 1;
+  display.updateWindow(10, 66, 239, 54, true); //street
+  display.powerDown();
 }
 
-void showPartialUpdate_dist(uint32_t dist) {
+void showPartialUpdate_dist(uint32_t dist) { //<--------------------------------- DISTANCE
+  display.init();
   display.setFont(&FreeSansBold18pt7b);
-  display.setTextColor(GxEPD_BLACK);
-  display.fillRect    (105, 33, 144, 25, GxEPD_WHITE);
+  display.fillRect    (85, 33, 120, 30, GxEPD_WHITE);
   display.setCursor(105, 57);
   display.print(dist);
-  display.print("m");
+  display.println("m");
+  display.updateWindow(85, 33, 120, 30, true); //distance
   updated_dist = 1;
-//  display.updateWindow(105, 33, 144, 25, true);
-
+  display.powerDown();
 }
 
-void getVolts(void * parameter) {
-for(;;){ // infinite loop
+void Battery_check(void) {
   raw  = (float) analogRead(battPin);
-  //volt = ((float)raw / 4095.0) * 2.0 * 3.3 * (1100 / 1000.0);
   volt = raw / vScale1;
-  Serial.print ("Battery = ");
-  Serial.println (volt);
-  Serial.print ("Raw = ");
-  Serial.println (raw);
-  display.fillRect (200, 0, 49, 17, GxEPD_WHITE);
-//  display.fillRect (66, 0, 184, 17, GxEPD_WHITE);
-  display.setFont(&FreeSansBold9pt7b);
+  display.init();
+  // display.setRotation(3);
   display.setTextColor(GxEPD_BLACK);
-  display.setCursor(200,15);
-  display.print(volt);
-  display.print("V");
-//  display.update();
-  display.updateWindow(200, 0, 49, 17);
-//  display.updateWindow(66, 0, 184, 17);
-  delay(300*1000);
-}
+  display.fillRect (200, 1, 45, 20, GxEPD_WHITE);
+  display.setFont(&FreeSansBold9pt7b);
+  display.setCursor(200, 15);
+  //int VbatP = mapf(volt, 3.0, 4.26, 0, 100); // vbat en pourcentage
+  int VbatP = mapf(volt, 3.0, 4.26, 0, 100);
+  Serial.println (VbatP);
+  display.print(VbatP);
+  display.print("%");
+  display.updateWindow(200, 1, 45, 20, true);
+  
+  //display.updateWindow(200, 1, 35, 425, true);
+  display.powerDown();
+
 }
 
 void setup() {
   // enable debug output
   Serial.begin(115200);
-
-    // Battery voltage
   pinMode(battPin, INPUT);
   esp_adc_cal_characteristics_t adc_chars;
   esp_adc_cal_value_t val_type = esp_adc_cal_characterize((adc_unit_t)ADC_UNIT_1, (adc_atten_t)ADC_ATTEN_DB_2_5, (adc_bits_width_t)ADC_WIDTH_BIT_12, 1100, &adc_chars);
-  raw  = analogRead(battPin);
-  volt = raw / vScale1;
-  Serial.print ("Battery = ");
-  Serial.println (volt);
-  Serial.print ("Raw = ");
-  Serial.println (raw);
-  
+
   SPI.begin(EPD_SCLK, EPD_MISO, EPD_MOSI);
   // Display start
+
   display.init();
-  display.setTextColor(GxEPD_BLACK);
-  display.setRotation(3); //orientation set to 1 to flip the display
-  display.fillRect(0, 0, 250, 122, GxEPD_WHITE);
-  display.setFont(&FreeSansBold12pt7b);
-  display.setCursor(40,50);
-  display.print("Komoot Nav"); //Boot Image
-  display.setFont(&FreeSansBold9pt7b);
-  display.setCursor(35, 100);
-  display.print(connectText);
+  display.setRotation(3);
+  display.updateWindow(200, 1, 45, 425, true);
+  display.updateWindow(30, 30, 160, 60, true);
   display.update();
 
-  // Battery voltage
-  pinMode(battPin, INPUT);
-  raw  = (float) analogRead(battPin);
-  volt = raw / vScale1;
-  Serial.print ("Battery = ");
-  Serial.println (volt);
-  Serial.print ("Raw = ");
-  Serial.println (raw);
-  display.fillRect (200, 0, 49, 15, GxEPD_WHITE);
-  display.setFont(&FreeSansBold9pt7b);
+  display.fillRect(30, 30, 160, 80, GxEPD_WHITE);
   display.setTextColor(GxEPD_BLACK);
-  display.setCursor(200,15);
-  display.print(volt);
-  display.print("V");
-  display.updateWindow(200, 0, 49, 15);
- 
-  BLEDevice::init("komootnav");
+  display.setFont(&FreeSansBold12pt7b);
+  display.setCursor(40, 50);
+  display.print("Komoot Nav"); //Boot Image
+  Serial.println("Komoot Nav!");
+  display.setFont(&FreeSansBold9pt7b);
+  display.setCursor(75, 70);
+  display.print(connectText);
+  display.updateWindow(30, 30, 160, 60, true);
+  display.powerDown();
+
+  Battery_check();
+  //display.updateWindow(0, 0, 220, 128, false);
+
+  BLEDevice::init("komoot_eink");
   // code added for pairing
   BLEServer *pServer = BLEDevice::createServer();
   BLEService *pService = pServer->createService(SERVICE_UUID);
@@ -314,62 +302,55 @@ void setup() {
 
 
 void loop() {
+
   // If the flag "doConnect" is true then we have scanned for and found the desired
-  // BLE Server with which we wish to connect.  Now we connect to it.  Once we are 
+  // BLE Server with which we wish to connect.  Now we connect to it.  Once we are
   // connected we set the connected flag to be true.
   if (doConnect == true) {
     if (connectToServer()) {
+      display.init();
       Serial.println("We are now connected to the BLE Server.");
-      //display connected status
-      //display.setFont(&FreeSansBold18pt7b);
-      //display.fillRect(connectTextBoundsX, connectTextBoundsY, connectTextBoundsW, connectTextBoundsH, GxEPD_BLACK);
-      //display.setCursor(35, 100);
-      //display.print(connectedText);
-      // delay(500);
-      display.fillRect(0, 0, 250, 122, GxEPD_WHITE);
+      display.fillRect(0, 0, 249, 120, GxEPD_WHITE);
+      //display.updateWindow(0, 0, 249, 120, true); //street
+      display.updateWindow(0, 0, 220, 120, true); //street
+      display.powerDown();
+      Battery_check();
+
+    } else {
+      display.init();
       display.update();
-     } else {
+      display.powerDown();
       Serial.println("We have failed to connect to the server; there is nothing more we will do.");
     }
     doConnect = false;
+    //display.update();
   }
 
-  
+
   unsigned long currentMillis = millis();
- 
-  if(currentMillis - previousMillis > interval) {
-    previousMillis = currentMillis;   
-    raw  = (float) analogRead(battPin);
-    volt = raw / vScale1;
-    Serial.print ("Battery = ");
-    Serial.println (volt);
-    Serial.print ("Raw = ");
-    Serial.println (raw);
-    display.fillRect (200, 0, 49, 15, GxEPD_WHITE);
-    display.setFont(&FreeSansBold9pt7b);
-    display.setTextColor(GxEPD_BLACK);
-    display.setCursor(200,15);
-    display.print(volt);
-    display.print("V");
-//  display.update();
-//    display.updateWindow(200, 0, 49, 15);
+
+
+  if (currentMillis - previousMillis > interval) {
+    previousMillis = currentMillis;
+    Battery_check();
   }
 
   // If we are connected to a peer BLE Server, update the characteristic each time we are reached
   // with the current time since boot.
   if (connected) {
+
     std::string value = pRemoteCharacteristic->readValue();//this crashes sometimes, receives the whole data packet
     if (value.length() > 4) {
       //in case we have update flag but characteristic changed due to navigation stop between
       updated = false;
 
       std::string distance;
-      distance = value.substr(5,8);
-      uint32_t dist=distance[0] | distance[1] << 8 | distance[2] << 16 | distance[3] << 24;
+      distance = value.substr(5, 8);
+      uint32_t dist = distance[0] | distance[1] << 8 | distance[2] << 16 | distance[3] << 24;
       if (dist2 != dist) {
         dist2 = dist;
-        showPartialUpdate_dist(dist2);
-        
+        showPartialUpdate_dist(dist2);  //<------------- DISTANCE
+
         Serial.print("Distance update: ");
         Serial.println(dist2);
         updated = true;
@@ -380,34 +361,50 @@ void loop() {
         old_street = street;
         old_firstWord = firstWord;
         firstWord = street.substr(0, street.find(", "));
-        showPartialUpdate_street(firstWord, old_firstWord);
+        showPartialUpdate_street(firstWord, old_firstWord); //<------- STREET
         Serial.print("Street update: ");
         Serial.println(firstWord.c_str());
         updated = true;
       } //extracts the firstword of the street name and displays it
 
       std::string direction;
-      direction = value.substr(4,4);
-      uint8_t d=direction[0];
+      direction = value.substr(4, 4);
+      uint8_t d = direction[0];
       if (d != dir) {
         dir = d;
-        showPartialUpdate_dir(dir);
+        showPartialUpdate_dir(dir);  // <-------------------------DIRECTION
         Serial.print("Direction update: ");
         Serial.println(d);
         updated = true;
+
+        //Battery_check();
       } //display direction
-
-     if (updated_dir == 1  ) { 
-       display.updateWindow(0, 0, 249, 121, true);
-//       Serial.println("Partial update");
-       updated = false;
-    }
-    if (updated_dist == 1) { display.updateWindow(105, 33, 144, 25, true); updated_dist = 0; }
-    if (updated_dir == 1) { display.updateWindow(0, 0, 65, 65, true); updated_dir = 0; }
-    if (updated_street == 1) { display.updateWindow(10, 66, 239, 54, true); updated_street = 0; }
-      
-
-     if (dist2 > 100) {
+      /*
+            //display.init();
+            display.setRotation(3);
+            if (updated_dir == 1  ) {
+              display.init();
+              display.updateWindow(0, 0, 64, 64, true); // direction
+              display.updateWindow(0, 0, 64, 64, true); // direction
+              updated = false;
+              display.powerDown();
+            }
+            if (updated_dist == 1) {
+              display.init();
+              display.updateWindow(85, 33, 120, 30, true);//distance
+              display.updateWindow(85, 33, 120, 30, true);//distance
+              updated_dist = 0;
+              display.powerDown();
+            }
+            if (updated_street == 1) {
+              display.init();
+              display.updateWindow(10, 66, 239, 54, true); //street
+              display.updateWindow(10, 66, 239, 54, true); //street
+              updated_street = 0;
+              display.powerDown();
+            }
+      */
+      if (dist2 > 100) {
         esp_sleep_enable_timer_wakeup(4000000);
         delay(4000);
       } else {

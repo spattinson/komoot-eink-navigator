@@ -1,7 +1,17 @@
 # komoot-eink-navigator
-Bluetooth Low Energy companion display for Komoot app
+Bluetooth Low Energy head up bike display GPS for Komoot app
 
-Hardware : LilyGO T5 v2.3.1_2.13 2.13"  ESP32 eink dev board and a 3d printed case
+Hardware : 
+
+LilyGO T5 v2.3.1_2.13 2.13  ESP32 eink dev board 
+
+3d printed case ( https://www.thingiverse.com/thing:4670205 )
+
+battery 1000mah (503450 on aliexpress 5$) not necessary if you plug the system all time on 5v source. 
+
+Esp32 tutorial installation for arduino : https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html
+
+LilyGO T5 v2.3.1_2.13 2.13 tutorial installation for arduino : https://github.com/Xinyuan-LilyGO/LilyGo-T5-Epaper-Series?spm=a2g0o.detail.1000023.1.79987bb0ULPo6j 
 
 How to use the device :
 
@@ -22,14 +32,16 @@ Komoot does not use the `0x2902` descriptor convention
 
 How to use the device :
 
-2. Upload the ino program
+2. Upload the ino program:
+
+![image](https://user-images.githubusercontent.com/20805763/184874755-e7740692-4c57-4012-bc63-e487796c6ea8.png)
 
 //Pairing
 
-5. Open the komoot app and navigate to profile>settings>Ble connect. tap on cyclo-hac and turn on esp32
+3. Open the komoot app and navigate to profile>settings>Ble connect. tap on cyclo-hac and turn on esp32
 
 
-6. Go back and start the navigation under plan and the display will start updating !
+4. Go back and start the navigation under plan and the display will start updating !
 
 ![alt text](IMG_20210917_140115.jpg)
 
